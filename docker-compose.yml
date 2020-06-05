@@ -1,0 +1,58 @@
+version: '3.1'
+
+services:
+    strapi:
+        image: node:12.18.0-stretch
+        restart: always
+        environment:
+            NODE_ENV: development
+            HOST: 0.0.0.0
+            PORT: 1337
+        command: ["yarn", "develop"]
+        depends_on:
+            - mysql_db
+        volumes:
+            - ./strapi-api:/strapi-api
+        ports:
+            - 1337:1337
+        working_dir: /strapi-api
+
+    website:
+        image: node:12.18.0-stretch
+        restart: always
+        environment:
+            NODE_ENV: development
+            HOST: 0.0.0.0
+        volumes:
+            - ./website:/website
+        ports:
+            - 3000:3000
+        command: ["yarn", "dev"]
+        depends_on:
+            - strapi
+        working_dir: /website
+
+    mysql_db:
+        image: mysql:5.7
+        restart: always
+        ports:
+            - 3306:3306
+        environment:
+            MYSQL_DATABASE: application
+            MYSQL_USER: admin
+            MYSQL_PASSWORD: password
+            MYSQL_RANDOM_ROOT_PASSWORD: '1'
+        volumes:
+            - db:/var/lib/mysql
+            - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    pma:
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - 8080:80
+        environment:
+            PMA_HOST: mysql_db
+        depends_on:
+            - mysql_db
+
+volumes:
+    db:
